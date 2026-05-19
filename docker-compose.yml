@@ -1,0 +1,68 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: teamboard-backend
+
+    ports:
+      - "8080:8080"
+
+    environment:
+      APP_ENV: development
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: teamboard
+      DB_PASSWORD: teamboard_password
+      DB_NAME: teamboard
+
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:17-alpine
+
+    container_name: teamboard-postgres
+
+    environment:
+      POSTGRES_USER: teamboard
+      POSTGRES_PASSWORD: teamboard_password
+      POSTGRES_DB: teamboard
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/postgres-init:/docker-entrypoint-initdb.d
+
+  redis:
+    image: redis:8-alpine
+
+    container_name: teamboard-redis
+
+    ports:
+      - "6379:6379"
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.2
+    container_name: teamboard-keycloak
+
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: adminpassword
+
+    command:
+      - start-dev
+
+    ports:
+      - "8081:8080"
+
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
